@@ -27,7 +27,13 @@ async function run() {
 
         
         const db = client.db(process.env.BLOOD_NAME);
-        // const listingCollection = db.collection("listing");
+        const usersCollection = db.collection("users");
+
+        app.post("/users", async (res, req) => {
+            const userData = req.body;
+            const result = await usersCollection.insertOne(userData);
+            res.send(result);
+        })
 
 
         
