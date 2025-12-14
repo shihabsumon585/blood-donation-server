@@ -35,6 +35,18 @@ async function run() {
             const result = await usersCollection.insertOne(userData);
             res.send(result);
         })
+        
+        app.get("/users", async (req, res) => {
+            const result = await usersCollection.find().toArray();
+            res.send(result);
+        })
+        app.get("/users/:email", async (req, res) => {
+            const {email} = req.params;
+            const query = { email: email};
+            console.log("Query: ", query);
+            const result = await usersCollection.findOne(query);
+            res.send(result);
+        })
 
 
         // await client.db("admin").command({ ping: 1 });
