@@ -31,85 +31,10 @@ async function run() {
 
         app.post("/users", async (req, res) => {
             const userData = req.body;
+            userData.createdAt = new Date();
             const result = await usersCollection.insertOne(userData);
             res.send(result);
         })
-
-
-        
-
-
-
-
-
-
-
-        // app.post("/listing", async (req, res) => {
-        //     const newProduct = req.body;
-        //     const result = await listingCollection.insertOne(newProduct);
-        //     res.send(result);
-        // })
-        // app.patch("/listing/:id", async (req, res) => {
-        //     console.log("hit the patch");
-        //     const updateData = req.body;
-        //     const id = req.params;
-        //     const query = { _id: new ObjectId(id) };
-        //     const updateDoc = {
-        //         $set: updateData
-        //     }
-        //     const result = await listingCollection.updateOne(query, updateDoc);
-        //     res.send(result);
-        //     console.log("finish the patch");
-        // })
-        // app.delete("/listing/:id", async (req, res) => {
-        //     const { id } = req.params;
-        //     console.log(id);
-        //     const query = { _id: new ObjectId(id) }
-        //     const result = await listingCollection.deleteOne(query);
-        //     res.send(result);
-        // })
-        // app.get("/listing", async (req, res) => {
-        //     const { email } = req.query;
-        //     const query = {};
-        //     if (email) {
-        //         query.email = email;
-        //     }
-        //     const cursor = listingCollection.find(query);
-        //     const result = await cursor.toArray();
-        //     res.send(result);
-        // })
-        // app.get("/listing/:id", async (req, res) => {
-        //     const { id } = req.params;
-        //     const query = { _id: new ObjectId(id) };
-        //     const result = await listingCollection.findOne(query);
-        //     res.send(result);
-        // })
-        // app.get("/category-filtered-product/:category", async (req, res) => {
-        //     const { category } = req.params;
-        //     const query = {};
-        //     if (category) {
-        //         query.category = category;
-        //     }
-        //     const cursor = listingCollection.find(query);
-        //     const result = await cursor.toArray();
-        //     res.send(result);
-        // })
-        // app.post("/orders", async (req, res) => {
-        //     const newProduct = req.body;
-        //     const result = await ordersCollection.insertOne(newProduct);
-        //     res.send(result);
-        // })
-        // app.get("/orders", async (req, res) => {
-        //     const { email } = req.query;
-        //     const query = {};
-        //     if (email) {
-        //         query.email = email;
-        //     }
-        //     const cursor = ordersCollection.find(query);
-        //     const result = await cursor.toArray();
-        //     res.send(result);
-        // })
-
 
 
         // await client.db("admin").command({ ping: 1 });
