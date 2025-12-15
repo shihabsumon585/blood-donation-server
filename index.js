@@ -28,6 +28,7 @@ async function run() {
         
         const db = client.db(process.env.BLOOD_NAME);
         const usersCollection = db.collection("users");
+        const productsCollection = db.collection("products");
 
         app.post("/users", async (req, res) => {
             const userData = req.body;
@@ -45,6 +46,14 @@ async function run() {
             const query = { email: email};
             console.log("Query: ", query);
             const result = await usersCollection.findOne(query);
+            res.send(result);
+        })
+
+        // products backend here's start
+        app.post("/products", async(req, res) => {
+            const productDAta = req.body;
+            productDAta.createdAt = new Date();
+            const result = await productsCollection.insertOne(productDAta);
             res.send(result);
         })
 
