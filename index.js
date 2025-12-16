@@ -28,11 +28,13 @@ async function run() {
         
         const db = client.db(process.env.BLOOD_NAME);
         const usersCollection = db.collection("users");
-        const productsCollection = db.collection("products");
+        const donar_requestsCollection = db.collection("donar-requests");
 
         app.post("/users", async (req, res) => {
             const userData = req.body;
             userData.createdAt = new Date();
+            userData.role = "donar";
+            userData.status = "active";
             const result = await usersCollection.insertOne(userData);
             res.send(result);
         })
@@ -54,6 +56,13 @@ async function run() {
             const productDAta = req.body;
             productDAta.createdAt = new Date();
             const result = await productsCollection.insertOne(productDAta);
+            res.send(result);
+        })
+
+        app.get("/products/manager/:email", async (req, res) => {
+            const email = req.params.email;
+            const query = { managerEmail: email };
+            const result = await productsCollection.find(query).toArray();
             res.send(result);
         })
 
