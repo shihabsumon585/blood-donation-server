@@ -51,11 +51,11 @@ async function run() {
             res.send(result);
         })
 
-        // products backend here's start
-        app.post("/products", async(req, res) => {
+        // donar data backend here's start
+        app.post("/donar-requests", async(req, res) => {
             const productDAta = req.body;
             productDAta.createdAt = new Date();
-            const result = await productsCollection.insertOne(productDAta);
+            const result = await donar_requestsCollection.insertOne(productDAta);
             res.send(result);
         })
 
