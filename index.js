@@ -9,7 +9,42 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-// Uxmq0r572YdBK2zT
+
+// **********************************************************************
+// -------------------------------------------------------------------
+var admin = require("firebase-admin");
+
+const decoded = Buffer.from(process.env.FB_SERVICE_KEY, 'base64').toString('utf8')
+const serviceAccount = JSON.parse(decoded);
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount)
+});
+// ------------------------------------------------------------------
+
+
+// our middleare--------------------------------------------------
+const verifyFBToken = async (req, res, next) => {
+    const token = req.headers.authorization;
+
+    if(!token){
+        return res.status(401).send({message: "unauthorize access"})
+    }
+
+    try {
+        const idToken = token.split(" ")[1]
+        const decoded = await admin.auth().verifyIdToken(idToken)
+        console.log("Decoded Info", decoded);
+        req.decoded_email = decoded.email;
+        next();
+    } catch (error) {
+        return res.status(401).send({message: "unauthorize access"})
+    }
+}
+// **********************************************************************
+
+
+
 
 const uri = `mongodb+srv://${process.env.BLOOD_USER}:${process.env.BLOOD_PASS}@cluster0.0eh4pca.mongodb.net/?appName=Cluster0`;
 
@@ -39,10 +74,11 @@ async function run() {
             res.send(result);
         })
         
-        app.get("/users", async (req, res) => {
+        app.get("/users", verifyFBToken, async (req, res) => {
             const result = await usersCollection.find().toArray();
             res.send(result);
         })
+
         app.get("/users/:email", async (req, res) => {
             const {email} = req.params;
             const query = { email: email};
@@ -59,12 +95,7 @@ async function run() {
             res.send(result);
         })
 
-        app.get("/products/manager/:email", async (req, res) => {
-            const email = req.params.email;
-            const query = { managerEmail: email };
-            const result = await productsCollection.find(query).toArray();
-            res.send(result);
-        })
+        
 
 
         // await client.db("admin").command({ ping: 1 });
