@@ -21,7 +21,7 @@ const decoded = Buffer.from(process.env.FB_SERVICE_KEY, 'base64').toString('utf8
 const serviceAccount = JSON.parse(decoded);
 
 admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
+    credential: admin.credential.cert(serviceAccount)
 });
 // ------------------------------------------------------------------
 
@@ -30,8 +30,8 @@ admin.initializeApp({
 const verifyFBToken = async (req, res, next) => {
     const token = req.headers.authorization;
 
-    if(!token){
-        return res.status(401).send({message: "unauthorize access"})
+    if (!token) {
+        return res.status(401).send({ message: "unauthorize access" })
     }
 
     try {
@@ -40,7 +40,7 @@ const verifyFBToken = async (req, res, next) => {
         req.decoded_email = decoded.email;
         next();
     } catch (error) {
-        return res.status(401).send({message: "unauthorize access"})
+        return res.status(401).send({ message: "unauthorize access" })
     }
 }
 // **********************************************************************
@@ -62,7 +62,7 @@ const client = new MongoClient(uri, {
 async function run() {
     try {
 
-        
+
         const db = client.db(process.env.BLOOD_NAME);
         const usersCollection = db.collection("users");
         const donar_requestsCollection = db.collection("donar-requests");
@@ -76,24 +76,24 @@ async function run() {
             const result = await usersCollection.insertOne(userData);
             res.send(result);
         })
-        
+
         app.get("/users", verifyFBToken, async (req, res) => {
             const result = await usersCollection.find().toArray();
             res.send(result);
         })
 
         app.get("/users/:email", async (req, res) => {
-            const {email} = req.params;
-            const query = { email: email};
+            const { email } = req.params;
+            const query = { email: email };
             const result = await usersCollection.findOne(query);
             res.send(result);
         })
-        
+
         app.patch("/update/user/status", verifyFBToken, async (req, res) => {
-            const {email, status} = req.query;
-            const query = { email: email};
+            const { email, status } = req.query;
+            const query = { email: email };
             const updateStatus = {
-                $set : {
+                $set: {
                     status: status
                 }
             }
@@ -102,7 +102,7 @@ async function run() {
         })
 
         // donar data backend here's start
-        app.post("/donar-requests", async(req, res) => {
+        app.post("/donar-requests", async (req, res) => {
             const productDAta = req.body;
             productDAta.createdAt = new Date();
             productDAta.status = "pending"
@@ -115,13 +115,38 @@ async function run() {
 
             const size = Number(req.query.size);
             const page = Number(req.query.page);
-            
-            const query = {requesterEmail: email};
+
+            const query = { requesterEmail: email };
             const result = await donar_requestsCollection.find(query).limit(size).skip(page * size).toArray();
-            
+
             const totalRequest = await donar_requestsCollection.countDocuments(query);
 
-            res.send({request: result, totalRequest});
+            res.send({ request: result, totalRequest });
+        })
+
+        app.get("/search-requests", async (req, res) => {
+            const { bloodGroup, district, upazila } = req.query;
+
+            // search query
+            const query = {};
+
+            if(!query){
+                return;
+            }
+            if(bloodGroup){
+                const fixed = bloodGroup.replace(/ /g, "+").trim();
+                query.bloodGroup = fixed;
+            }
+            if(district) {
+                query.district = district;
+            }
+            if(upazila) {
+                query.upazila = upazila;
+            }
+            console.log(query);
+
+            const result = await donar_requestsCollection.find(query).toArray();
+            res.send(result);
         })
 
 
@@ -152,22 +177,22 @@ async function run() {
                 success_url: `${process.env.SITE_DOMAIN}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
                 cancel_url: `${process.env.SITE_DOMAIN}/payment-cancelled`
             })
-            res.send({url: session.url})
+            res.send({ url: session.url })
         })
 
-        app.post("/success-peyment", async(req, res) => {
+        app.post("/success-peyment", async (req, res) => {
             const { session_id } = req.query;
             const session = await stripe.checkout.sessions.retrieve(session_id);
-            
+
             const transactionId = session.payment_intent;
 
-            const paymentExist = await paymentCollection.findOne({transactionId});
+            const paymentExist = await paymentCollection.findOne({ transactionId });
 
-            if(paymentExist ){
+            if (paymentExist) {
                 return;
             }
 
-            if(session.payment_status === "paid") {
+            if (session.payment_status === "paid") {
                 const paymentInfo = {
                     amount: session.amount_total / 100,
                     currency: session.currency,
@@ -182,7 +207,7 @@ async function run() {
             }
         })
 
-        
+
 
 
         // await client.db("admin").command({ ping: 1 });
