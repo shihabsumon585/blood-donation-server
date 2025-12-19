@@ -4,6 +4,7 @@ const cors = require("cors");
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express();
 const port = process.env.PORT || 3000;
+const stripe = require("stripe")
 
 // middleware
 app.use(cors());
@@ -101,6 +102,7 @@ async function run() {
         app.post("/donar-requests", async(req, res) => {
             const productDAta = req.body;
             productDAta.createdAt = new Date();
+            productDAta.status = "pending"
             const result = await donar_requestsCollection.insertOne(productDAta);
             res.send(result);
         })
@@ -112,8 +114,11 @@ async function run() {
             const page = Number(req.query.page);
             
             const query = {requesterEmail: email};
-            const result = await donar_requestsCollection.find(query).limit(size).skip(page).toArray();
-            res.send(result);
+            const result = await donar_requestsCollection.find(query).limit(size).skip(page * size).toArray();
+            
+            const totalRequest = await donar_requestsCollection.countDocuments(query);
+
+            res.send({request: result, totalRequest});
         })
 
         
