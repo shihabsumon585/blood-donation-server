@@ -66,6 +66,7 @@ async function run() {
         const db = client.db(process.env.BLOOD_NAME);
         const usersCollection = db.collection("users");
         const donar_requestsCollection = db.collection("donar-requests");
+        const paymentCollection = db.collection("payments")
 
         app.post("/users", async (req, res) => {
             const userData = req.body;
@@ -148,10 +149,37 @@ async function run() {
                     donarName: information?.donarName
                 },
                 customer_email: information?.donarEmail,
-                success_url: `${process.env.SITE_DOMAIN}/payment-success?session_id={CHECKOUT_SESSION-ID}`,
+                success_url: `${process.env.SITE_DOMAIN}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
                 cancel_url: `${process.env.SITE_DOMAIN}/payment-cancelled`
             })
             res.send({url: session.url})
+        })
+
+        app.post("/success-peyment", async(req, res) => {
+            const { session_id } = req.query;
+            const session = await stripe.checkout.sessions.retrieve(session_id);
+            
+            const transactionId = session.payment_intent;
+
+            const paymentExist = await paymentCollection.findOne({transactionId});
+
+            if(paymentExist ){
+                return;
+            }
+
+            if(session.payment_status === "paid") {
+                const paymentInfo = {
+                    amount: session.amount_total / 100,
+                    currency: session.currency,
+                    donarEmail: session.customer_email,
+                    transactionId,
+                    payment_status: session.payment_status,
+                    paidAt: new Date(),
+                }
+
+                const result = await paymentCollection.insertOne(paymentInfo);
+                return res.send(result);
+            }
         })
 
         
