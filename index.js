@@ -4,7 +4,8 @@ const cors = require("cors");
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express();
 const port = process.env.PORT || 3000;
-const stripe = require("stripe")
+const stripe = require('stripe')(process.env.STRIPE_SECRETE);
+const crypto = require("crypto");
 
 // middleware
 app.use(cors());
@@ -14,6 +15,7 @@ app.use(express.json());
 // **********************************************************************
 // -------------------------------------------------------------------
 var admin = require("firebase-admin");
+const { info } = require("console");
 
 const decoded = Buffer.from(process.env.FB_SERVICE_KEY, 'base64').toString('utf8')
 const serviceAccount = JSON.parse(decoded);
@@ -119,6 +121,37 @@ async function run() {
             const totalRequest = await donar_requestsCollection.countDocuments(query);
 
             res.send({request: result, totalRequest});
+        })
+
+
+
+        // payments
+        app.post("/create-payment-checkout", async (req, res) => {
+            const information = req.body;
+            const amount = parseInt(information.donateAmount) * 100;
+
+            const session = await stripe.checkout.sessions.create({
+                line_items: [
+                    {
+                        price_data: {
+                            currency: "usd",
+                            unit_amount: amount,
+                            product_data: {
+                                name: "Please donate"
+                            }
+                        },
+                        quantity: 1,
+                    }
+                ],
+                mode: "payment",
+                metadata: {
+                    donarName: information?.donarName
+                },
+                customer_email: information?.donarEmail,
+                success_url: `${process.env.SITE_DOMAIN}/payment-success?session_id={CHECKOUT_SESSION-ID}`,
+                cancel_url: `${process.env.SITE_DOMAIN}/payment-cancelled`
+            })
+            res.send({url: session.url})
         })
 
         
