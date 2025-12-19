@@ -34,7 +34,6 @@ const verifyFBToken = async (req, res, next) => {
     try {
         const idToken = token.split(" ")[1]
         const decoded = await admin.auth().verifyIdToken(idToken)
-        console.log("Decoded Info", decoded);
         req.decoded_email = decoded.email;
         next();
     } catch (error) {
@@ -82,8 +81,19 @@ async function run() {
         app.get("/users/:email", async (req, res) => {
             const {email} = req.params;
             const query = { email: email};
-            console.log("Query: ", query);
             const result = await usersCollection.findOne(query);
+            res.send(result);
+        })
+        
+        app.patch("/update/user/status", verifyFBToken, async (req, res) => {
+            const {email, status} = req.query;
+            const query = { email: email};
+            const updateStatus = {
+                $set : {
+                    status: status
+                }
+            }
+            const result = await usersCollection.updateOne(query, updateStatus);
             res.send(result);
         })
 
@@ -92,6 +102,17 @@ async function run() {
             const productDAta = req.body;
             productDAta.createdAt = new Date();
             const result = await donar_requestsCollection.insertOne(productDAta);
+            res.send(result);
+        })
+
+        app.get("/my-request", verifyFBToken, async (req, res) => {
+            const email = req.decoded_email;
+
+            const size = Number(req.query.size);
+            const page = Number(req.query.page);
+            
+            const query = {requesterEmail: email};
+            const result = await donar_requestsCollection.find(query).limit(size).skip(page).toArray();
             res.send(result);
         })
 
