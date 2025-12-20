@@ -84,6 +84,7 @@ async function run() {
 
         app.get("/users/:email", async (req, res) => {
             const { email } = req.params;
+            console.log(email);
             const query = { email: email };
             const result = await usersCollection.findOne(query);
             res.send(result);
@@ -107,6 +108,20 @@ async function run() {
             productDAta.createdAt = new Date();
             productDAta.status = "pending"
             const result = await donar_requestsCollection.insertOne(productDAta);
+            res.send(result);
+        })
+
+        app.get("/view-details/:id", async (req, res) => {
+            const { id } = req.params;
+            const query = { _id: new ObjectId(id)};
+            const result = await donar_requestsCollection.findOne(query);
+            res.send(result);
+        })
+
+        app.get("/requests/pending", async (req, res) => {
+            const query = { status: "pending" }
+
+            const result = await donar_requestsCollection.find(query).toArray();
             res.send(result);
         })
 
