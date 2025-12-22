@@ -15,7 +15,7 @@ app.use(express.json());
 // **********************************************************************
 // -------------------------------------------------------------------
 var admin = require("firebase-admin");
-const { info } = require("console");
+// const { info } = require("");
 
 const decoded = Buffer.from(process.env.FB_SERVICE_KEY, 'base64').toString('utf8')
 const serviceAccount = JSON.parse(decoded);
@@ -81,10 +81,14 @@ async function run() {
             const result = await usersCollection.find().toArray();
             res.send(result);
         })
+        
+        app.get("/users/count", async (req, res) => {
+            const result = await usersCollection.find().toArray();
+            res.send(result);
+        })
 
         app.get("/users/:email", async (req, res) => {
             const { email } = req.params;
-            console.log(email);
             const query = { email: email };
             const result = await usersCollection.findOne(query);
             res.send(result);
@@ -102,6 +106,18 @@ async function run() {
             res.send(result);
         })
 
+        app.patch("/users/update-profile", async (req, res) => {
+            const { email, ...updatedData } = req.body;
+
+            const result = await usersCollection.updateOne(
+                { email },
+                { $set: updatedData }
+            );
+
+            res.send(result);
+        });
+
+
         // donar data backend here's start
         app.post("/donar-requests", async (req, res) => {
             const productDAta = req.body;
@@ -110,10 +126,15 @@ async function run() {
             const result = await donar_requestsCollection.insertOne(productDAta);
             res.send(result);
         })
+        
+        app.get("/donar-requests", async (req, res) => {
+            const result = await donar_requestsCollection.find().toArray();
+            res.send(result);
+        })
 
         app.get("/view-details/:id", async (req, res) => {
             const { id } = req.params;
-            const query = { _id: new ObjectId(id)};
+            const query = { _id: new ObjectId(id) };
             const result = await donar_requestsCollection.findOne(query);
             res.send(result);
         })
@@ -145,22 +166,59 @@ async function run() {
             // search query
             const query = {};
 
-            if(!query){
+            if (!query) {
                 return;
             }
-            if(bloodGroup){
+            if (bloodGroup) {
                 const fixed = bloodGroup.replace(/ /g, "+").trim();
                 query.bloodGroup = fixed;
             }
-            if(district) {
+            if (district) {
                 query.district = district;
             }
-            if(upazila) {
+            if (upazila) {
                 query.upazila = upazila;
             }
-            console.log(query);
 
             const result = await donar_requestsCollection.find(query).toArray();
+            res.send(result);
+        })
+
+        app.patch("/update-status/:id", async (req, res) => {
+            const {id} = req.params;
+            const email = req.body.email || "";
+            const name = req.body.name || "";
+            const status = req.body.status;
+            const query = {_id: new ObjectId(id)};
+            const updatedData = {
+                $set: {
+                    status: status,
+                    donarEmail: email,
+                    donarName: name
+                }
+            }
+            const result = await donar_requestsCollection.updateOne(query, updatedData);
+            res.send(result);
+        })
+        
+        app.patch("/users/role/:id", async (req, res) => {
+            const {id} = req.params;
+            const role = req.body.role;
+            const query = {_id: new ObjectId(id)};
+            console.log(id);
+            const updatedData = {
+                $set: {
+                    role: role,
+                }
+            }
+            const result = await usersCollection.updateOne(query, updatedData);
+            res.send(result);
+        })
+
+        app.delete("/requests-delete/:id", async(req, res) => {
+            const {id} = req.params;
+            const query = { _id: new ObjectId(id)};
+            const result = await donar_requestsCollection.deleteOne(query);
             res.send(result);
         })
 
@@ -178,7 +236,7 @@ async function run() {
                             currency: "usd",
                             unit_amount: amount,
                             product_data: {
-                                name: "Please donate"
+                                name: "Donate Amount"
                             }
                         },
                         quantity: 1,
@@ -199,6 +257,7 @@ async function run() {
             const { session_id } = req.query;
             const session = await stripe.checkout.sessions.retrieve(session_id);
 
+
             const transactionId = session.payment_intent;
 
             const paymentExist = await paymentCollection.findOne({ transactionId });
@@ -211,6 +270,7 @@ async function run() {
                 const paymentInfo = {
                     amount: session.amount_total / 100,
                     currency: session.currency,
+                    donarName: session.customer_details.name,
                     donarEmail: session.customer_email,
                     transactionId,
                     payment_status: session.payment_status,
@@ -220,6 +280,11 @@ async function run() {
                 const result = await paymentCollection.insertOne(paymentInfo);
                 return res.send(result);
             }
+        })
+
+        app.get("/payments", async (req, res) => {
+            const result = await paymentCollection.find().toArray();
+            res.send(result);
         })
 
 
