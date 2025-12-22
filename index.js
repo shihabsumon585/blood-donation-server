@@ -121,7 +121,6 @@ async function run() {
             const { id } = req.params;
             const role = req.body.role;
             const query = { _id: new ObjectId(id) };
-            console.log(id);
             const updatedData = {
                 $set: {
                     role: role,
@@ -233,18 +232,12 @@ async function run() {
         
         app.patch("/edit-donation/:id", async (req, res) => {
             const { id } = req.params;
-            const email = req.body.email || "";
-            const name = req.body.name || "";
-            const status = req.body.status;
+            const updatedData = req.body;
             const query = { _id: new ObjectId(id) };
-            const updatedData = {
-                $set: {
-                    status: status,
-                    donarEmail: email,
-                    donarName: name
-                }
+            const data = {
+                $set: updatedData
             }
-            const result = await donar_requestsCollection.updateOne(query, updatedData);
+            const result = await donar_requestsCollection.updateOne(query, data);
             res.send(result);
         })
 
@@ -322,11 +315,7 @@ async function run() {
             res.send(result);
         })
 
-
-
-
-        // await client.db("admin").command({ ping: 1 });
-        console.log("Pinged your deployment. You successfully connected to MongoDB!");
+        // console.log("Pinged your deployment. You successfully connected to MongoDB!");
     } finally {
         // await client.close();
     }
