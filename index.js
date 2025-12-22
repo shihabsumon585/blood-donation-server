@@ -81,7 +81,7 @@ async function run() {
             const result = await usersCollection.find().toArray();
             res.send(result);
         })
-        
+
         app.get("/users/count", async (req, res) => {
             const result = await usersCollection.find().toArray();
             res.send(result);
@@ -117,6 +117,20 @@ async function run() {
             res.send(result);
         });
 
+        app.patch("/users/role/:id", async (req, res) => {
+            const { id } = req.params;
+            const role = req.body.role;
+            const query = { _id: new ObjectId(id) };
+            console.log(id);
+            const updatedData = {
+                $set: {
+                    role: role,
+                }
+            }
+            const result = await usersCollection.updateOne(query, updatedData);
+            res.send(result);
+        })
+
 
         // donar data backend here's start
         app.post("/donar-requests", async (req, res) => {
@@ -126,7 +140,7 @@ async function run() {
             const result = await donar_requestsCollection.insertOne(productDAta);
             res.send(result);
         })
-        
+
         app.get("/donar-requests", async (req, res) => {
             const result = await donar_requestsCollection.find().toArray();
             res.send(result);
@@ -160,6 +174,21 @@ async function run() {
             res.send({ request: result, totalRequest });
         })
 
+        // all donation request
+        app.get("/all-donation-request", verifyFBToken, async (req, res) => {
+            const email = req.decoded_email;
+
+            const size = Number(req.query.size);
+            const page = Number(req.query.page);
+
+            const query = { requesterEmail: email };
+            const result = await donar_requestsCollection.find().limit(size).skip(page * size).toArray();
+
+            const totalRequest = await donar_requestsCollection.countDocuments();
+
+            res.send({ request: result, totalRequest });
+        })
+
         app.get("/search-requests", async (req, res) => {
             const { bloodGroup, district, upazila } = req.query;
 
@@ -185,11 +214,11 @@ async function run() {
         })
 
         app.patch("/update-status/:id", async (req, res) => {
-            const {id} = req.params;
+            const { id } = req.params;
             const email = req.body.email || "";
             const name = req.body.name || "";
             const status = req.body.status;
-            const query = {_id: new ObjectId(id)};
+            const query = { _id: new ObjectId(id) };
             const updatedData = {
                 $set: {
                     status: status,
@@ -201,23 +230,29 @@ async function run() {
             res.send(result);
         })
         
-        app.patch("/users/role/:id", async (req, res) => {
-            const {id} = req.params;
-            const role = req.body.role;
-            const query = {_id: new ObjectId(id)};
-            console.log(id);
+        
+        app.patch("/edit-donation/:id", async (req, res) => {
+            const { id } = req.params;
+            const email = req.body.email || "";
+            const name = req.body.name || "";
+            const status = req.body.status;
+            const query = { _id: new ObjectId(id) };
             const updatedData = {
                 $set: {
-                    role: role,
+                    status: status,
+                    donarEmail: email,
+                    donarName: name
                 }
             }
-            const result = await usersCollection.updateOne(query, updatedData);
+            const result = await donar_requestsCollection.updateOne(query, updatedData);
             res.send(result);
         })
 
-        app.delete("/requests-delete/:id", async(req, res) => {
-            const {id} = req.params;
-            const query = { _id: new ObjectId(id)};
+
+
+        app.delete("/requests-delete/:id", async (req, res) => {
+            const { id } = req.params;
+            const query = { _id: new ObjectId(id) };
             const result = await donar_requestsCollection.deleteOne(query);
             res.send(result);
         })
