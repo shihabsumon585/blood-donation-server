@@ -7,7 +7,7 @@ const port = process.env.PORT || 3000;
 const stripe = require('stripe')(process.env.STRIPE_SECRETE);
 const crypto = require("crypto");
 
-// middleware
+// all middleware 
 app.use(cors());
 app.use(express.json());
 
