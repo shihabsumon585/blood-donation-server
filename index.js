@@ -17,11 +17,12 @@ app.use(express.json());
 var admin = require("firebase-admin");
 // const { info } = require("");
 
-const decoded = Buffer.from(process.env.FB_SERVICE_KEY, 'base64').toString('utf8')
-const serviceAccount = JSON.parse(decoded);
+// const decoded = Buffer.from(process.env.FB_SERVICE_KEY, 'base64').toString('utf8')
+// const serviceAccount = JSON.parse(decoded);
 
 admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
+    // credential: admin.credential.cert(serviceAccount)
+    credential: admin.credential.cert(require("./incubator.json"))
 });
 // ------------------------------------------------------------------
 
@@ -77,7 +78,7 @@ async function run() {
             res.send(result);
         })
 
-        app.get("/users", verifyFBToken, async (req, res) => {
+        app.get("/users",  async (req, res) => {
             const result = await usersCollection.find().toArray();
             res.send(result);
         })
@@ -94,7 +95,7 @@ async function run() {
             res.send(result);
         })
 
-        app.patch("/update/user/status", verifyFBToken, async (req, res) => {
+        app.patch("/update/user/status", async (req, res) => {
             const { email, status } = req.query;
             const query = { email: email };
             const updateStatus = {
@@ -174,7 +175,7 @@ async function run() {
         })
 
         // all donation request
-        app.get("/all-donation-request", verifyFBToken, async (req, res) => {
+        app.get("/all-donation-request", async (req, res) => {
             const email = req.decoded_email;
 
             const size = Number(req.query.size);
